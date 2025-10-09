@@ -21,6 +21,7 @@ search:
   initial_top_k: 20
   rerank_top_k: 5
   graph_expand_hops: 1
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2" # Set to null to disable CrossEncoder
 
 metadata:
   include_indices: true

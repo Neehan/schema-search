@@ -12,7 +12,7 @@ from schema_search.metadata_extractor import MetadataExtractor
 from schema_search.chunker import Chunker, Chunk
 from schema_search.embedding_manager import EmbeddingManager
 from schema_search.graph_builder import GraphBuilder
-from schema_search.ranker import Ranker
+from schema_search.ranker import create_ranker
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class SchemaSearch:
         self.chunker = Chunker(self.config)
         self.embedding_manager = EmbeddingManager(self.config)
         self.graph_builder = GraphBuilder(self.config)
-        self.ranker = Ranker(self.config)
+        self.ranker = create_ranker(self.config)
 
     def _setup_logging(self):
         level = getattr(logging, self.config.get("logging", {}).get("level", "INFO"))
@@ -69,7 +69,7 @@ class SchemaSearch:
         self.graph_builder.build(self.metadata_dict, force)
         self.chunks = self.chunker.chunk_metadata(self.metadata_dict)
         self.embedding_manager.load_or_generate(self.chunks, force)
-        self.ranker.build_bm25(self.chunks)
+        self.ranker.build(self.chunks)
 
         logger.info(
             f"Indexing complete: {len(self.metadata_dict)} tables, {len(self.chunks)} chunks"
@@ -156,9 +156,10 @@ class SchemaSearch:
         rerank_embeddings = self.embedding_manager.embeddings[rerank_chunk_indices]
         rerank_chunks = [self.chunks[idx] for idx in rerank_chunk_indices]
 
-        temp_ranker = Ranker(self.config)
+        # Use the configured ranker (could be BM25 or CrossEncoder)
+        temp_ranker = create_ranker(self.config)
         temp_ranker.chunks = rerank_chunks
-        temp_ranker.build_bm25(rerank_chunks)
+        temp_ranker.build(rerank_chunks)
 
         reranked = temp_ranker.rank(query, query_embedding, rerank_embeddings)
 

@@ -127,6 +127,31 @@ Instead of raw markdown chunks, each table schema is summarized by Claude to foc
 
 This creates a sparser, more meaningful embedding space for better search results.
 
+### Ranking Strategies
+
+**BM25 Hybrid (default)**:
+```yaml
+search:
+  reranker_model: null  # No reranker
+  embedding_weight: 0.6
+  bm25_weight: 0.4
+```
+
+Combines semantic embeddings with BM25 lexical matching for balanced, fast results.
+
+**CrossEncoder Reranking (optional)**:
+```yaml
+search:
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  initial_top_k: 20  # Number of candidates to rerank
+```
+
+Enable by setting `reranker_model`. Two-stage approach:
+1. Fast embedding search to get top `initial_top_k` candidates
+2. Precise CrossEncoder reranking on those candidates
+
+CrossEncoder is slower but more accurate for complex semantic queries.
+
 ## Architecture
 
 ```
@@ -135,7 +160,7 @@ schema_search/
 ├── chunker.py              # Markdown chunking with overlap
 ├── embedding_manager.py    # Embedding generation & caching
 ├── graph_builder.py        # FK relationship graph
-├── ranker.py               # Hybrid scoring (BM25 + embeddings)
+├── ranker.py               # Ranking strategies (BM25, CrossEncoder)
 └── schema_search.py        # Main orchestrator
 ```
 
