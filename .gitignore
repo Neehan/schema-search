@@ -211,3 +211,5 @@ __marimo__/
 # schema-search cache
 .schema_search_cache/
 *.env
+
+CLAUDE.md

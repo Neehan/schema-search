@@ -5,25 +5,29 @@ embedding:
   model: "multi-qa-MiniLM-L6-cos-v1"
   normalize: true
   batch_size: 32
-  show_progress: true
+  show_progress: false
   cache_dir: ".schema_search_cache"
 
 chunking:
+  strategy: "llm" # Options: "text", "llm"
   max_tokens: 256
   overlap_tokens: 50
-  format: "markdown"
-  use_llm_summary: false
-  summary_model: "claude-3-5-haiku-latest"
+  model: "claude-3-5-haiku-latest"
 
 search:
-  embedding_weight: 0.6
-  bm25_weight: 0.4
   initial_top_k: 20
   rerank_top_k: 5
-  graph_expand_hops: 1
-  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2" # Set to null to disable CrossEncoder
 
-metadata:
+reranker:
+  strategy: "cross_encoder" # Options: "bm25_hybrid", "cross_encoder"
+  # BM25 Hybrid settings (used when strategy is "bm25_hybrid")
+  embedding_weight: 0.6
+  bm25_weight: 0.4
+  # CrossEncoder settings (used when strategy is "cross_encoder")
+  model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+schema:
+  include_columns: true
   include_indices: true
   include_foreign_keys: true
-  include_row_counts: false
+  include_constraints: true

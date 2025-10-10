@@ -16,6 +16,7 @@ setup(
         "tqdm>=4.65.0",
         "anthropic>=0.40.0",
         "python-dotenv>=1.0.0",
+        "rapidfuzz>=3.0.0",
     ],
     extras_require={
         "test": [
