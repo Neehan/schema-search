@@ -15,7 +15,7 @@ data_without_reranker = {
 data_with_reranker = {
     "scores": [49, 44, 45, 44],
     "latencies": [801, 760, 579, 652],
-    "memory": [549.11, 414.31, 560.77, 591.86],
+    "memory": [549.11, 560.14, 560.77, 591.86],
 }
 
 color_score = "#3b82f6"
