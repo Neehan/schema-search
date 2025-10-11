@@ -1,6 +1,6 @@
 # Schema Search
 
-An MCP Server for Natural Language Search over Database Schemas. Find exact tables you need, with all their relationships mapped out, in milliseconds. No vector database setup required.
+An MCP Server for Natural Language Search over RDBMS Schemas. Find exact tables you need, with all their relationships mapped out, in milliseconds. No vector database setup is required.
 
 ## Why
 
@@ -10,11 +10,11 @@ You could:
 - Grep through SQL files for 20 minutes
 - Pass the full schema to an LLM and watch it struggle with 200 tables
 
-Or build schematic embeddings of your tables, store in-memory, and search in natural language.
+Or **build schematic embeddings of your tables, store in-memory, and query in natural language in an MCP server**.
 
 ### Benefits
-- No vector database setup required
-- Small memory footprint -- easily scales up to 1000 tables and 10,000 columns.
+- No vector database setup is required
+- Small memory footprint -- easily scales up to 1000 tables and 10,000+ columns.
 - Millisecond query latency
 
 ## Install
