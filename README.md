@@ -21,17 +21,16 @@ Or build schematic embeddings of your tables, store in-memory, and search in nat
 
 ```bash
 # PostgreSQL
-pip install "git+https://github.com/Neehan/schema-search.git#egg=schema-search[postgres,mcp]"
+pip install "schema-search[postgres,mcp]"
 
 # MySQL
-pip install "git+https://github.com/Neehan/schema-search.git#egg=schema-search[mysql,mcp]"
+pip install "schema-search[mysql,mcp]"
 
 # Snowflake
-pip install "git+https://github.com/Neehan/schema-search.git#egg=schema-search[snowflake,mcp]"
+pip install "schema-search[snowflake,mcp]"
 
 # BigQuery
-pip install "git+https://github.com/Neehan/schema-search.git#egg=schema-search[bigquery,mcp]"
-
+pip install "schema-search[bigquery,mcp]"
 ```
 
 ## MCP Server
