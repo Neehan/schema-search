@@ -137,7 +137,7 @@ Embedding model ~90 MB, reranker ~155 MB (if enabled). Actual process memory dep
 
 ![Strategy Comparison](img/strategy_comparison.png)
 
-Tested on a database with 26 tables using the sample `config.yml`.
+Tested on a real database with 26 tables and 200+ columns using the sample `config.yml`.
 
 ### With Reranker (`Alibaba-NLP/gte-reranker-modernbert-base`)
 
