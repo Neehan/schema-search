@@ -86,7 +86,7 @@ from schema_search import SchemaSearch
 engine = create_engine("postgresql://user:pass@localhost/db")
 search = SchemaSearch(engine)
 
-search.index()
+search.index(force=False) # default is False
 results = search.search("where are user refunds stored?")
 
 for result in results['results']:
