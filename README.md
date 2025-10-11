@@ -99,7 +99,7 @@ Tested on a database with 26 tables using the sample `config.yml`:
 - Reranking adds ~500ms latency but significantly improves accuracy
 - BM25 struggles with semantic queries (40/50)
 
-### Without Reranker** (set `reranker.model: null`):
+### Without Reranker (set `reranker.model: null`):
 - Semantic is most accurate (44/50) and fastest (26ms)
 - Hybrid trades some accuracy for fuzzy matching capability (38/50)
 - 10-30x faster but less accurate overall
