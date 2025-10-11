@@ -12,6 +12,11 @@ You could:
 
 Or build schematic embeddings of your tables, store in-memory, and search in natural language.
 
+### Benefits
+- No vector database setup required
+- Small memory footprint -- easily scales up to 1000 tables and 10,000 columns.
+- Millisecond query latency
+
 ## Install
 
 ```bash
