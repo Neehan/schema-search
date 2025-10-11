@@ -133,10 +133,11 @@ Schema Search supports four search strategies:
 Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
 
 ## Performance Comparison
+Embedding model ~90 MB, reranker ~155 MB (if enabled). Actual process memory depends on Python runtime and dependencies.
 
 ![Strategy Comparison](img/strategy_comparison.png)
 
-Tested on a database with 26 tables using the sample `config.yml`:
+Tested on a database with 26 tables using the sample `config.yml`.
 
 ### With Reranker (`Alibaba-NLP/gte-reranker-modernbert-base`)
 
