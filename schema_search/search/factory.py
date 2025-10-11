@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 from schema_search.search.semantic import SemanticSearchStrategy
 from schema_search.search.fuzzy import FuzzySearchStrategy
@@ -11,8 +11,9 @@ from schema_search.rankers.base import BaseRanker
 
 def create_search_strategy(
     config: Dict,
-    embedding_cache: BaseEmbeddingCache,
-    reranker: Optional[BaseRanker],
+    get_embedding_cache: Callable[[], BaseEmbeddingCache],
+    get_bm25_cache: Callable,
+    get_reranker: Callable[[], Optional[BaseRanker]],
     strategy_type: Optional[str],
 ) -> BaseSearchStrategy:
     search_config = config["search"]
@@ -21,9 +22,11 @@ def create_search_strategy(
     initial_top_k = search_config["initial_top_k"]
     rerank_top_k = search_config["rerank_top_k"]
 
+    reranker = get_reranker()
+
     if strategy_type == "semantic":
         return SemanticSearchStrategy(
-            embedding_cache=embedding_cache,
+            embedding_cache=get_embedding_cache(),
             initial_top_k=initial_top_k,
             rerank_top_k=rerank_top_k,
             reranker=reranker,
@@ -31,6 +34,7 @@ def create_search_strategy(
 
     if strategy_type == "bm25":
         return BM25SearchStrategy(
+            bm25_cache=get_bm25_cache(),
             initial_top_k=initial_top_k,
             rerank_top_k=rerank_top_k,
             reranker=reranker,
@@ -46,7 +50,8 @@ def create_search_strategy(
     if strategy_type == "hybrid":
         semantic_weight = search_config["semantic_weight"]
         return HybridSearchStrategy(
-            embedding_cache=embedding_cache,
+            embedding_cache=get_embedding_cache(),
+            bm25_cache=get_bm25_cache(),
             initial_top_k=initial_top_k,
             rerank_top_k=rerank_top_k,
             reranker=reranker,

@@ -1,11 +1,15 @@
 import os
 from pathlib import Path
+import gc
+from typing import cast
 
 import pytest
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import psutil
 
 from schema_search import SchemaSearch
+from schema_search.types import SearchType
 
 
 @pytest.fixture(scope="module")
@@ -51,9 +55,6 @@ def test_index_creation(search_engine):
 
     assert len(search_engine.schemas) > 0, "No tables found in database"
     assert len(search_engine.chunks) > 0, "No chunks generated"
-    assert (
-        search_engine.embedding_cache.embeddings is not None
-    ), "Embeddings not generated"
 
     print(f"\nIndexing: {stats}")
 
@@ -94,14 +95,6 @@ def _calculate_score(results, correct_table):
         if result["table"] == correct_table:
             return 6 - position
     return 0
-
-
-def _print_results(label, results, correct_table, score, latency):
-    """Print search results with score."""
-    print(f"\n{label} - Score: {score}/5 - Latency: {latency:.3f}s")
-    for i, result in enumerate(results[:5], 1):
-        marker = " ✓" if result["table"] == correct_table else ""
-        print(f"  {i}. {result['table']} (score: {result['score']:.3f}){marker}")
 
 
 def _get_eval_data():
@@ -150,62 +143,210 @@ def _get_eval_data():
     ]
 
 
-def test_search_comparison_with_without_graph(search_engine):
-    """Compare search results: semantic, BM25, fuzzy, and hybrid."""
-    search_engine.index(force=True)
+def test_memory_bm25_isolated(database_url, llm_config):
+    """Measure BM25 in complete isolation."""
+    _run_memory_test_for_strategy(database_url, llm_config, "bm25")
+
+
+def test_memory_fuzzy_isolated(database_url, llm_config):
+    """Measure Fuzzy in complete isolation."""
+    _run_memory_test_for_strategy(database_url, llm_config, "fuzzy")
+
+
+def test_memory_semantic_isolated(database_url, llm_config):
+    """Measure Semantic in complete isolation."""
+    _run_memory_test_for_strategy(database_url, llm_config, "semantic")
+
+
+def test_memory_hybrid_isolated(database_url, llm_config):
+    """Measure Hybrid in complete isolation."""
+    _run_memory_test_for_strategy(database_url, llm_config, "hybrid")
+
+
+def _run_memory_test_for_strategy(database_url, llm_config, strategy):
+    """Run memory test for a single strategy."""
+    gc.collect()
+
+    engine = create_engine(database_url)
+    search_engine = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search_engine.index(force=False)
+
+    process = psutil.Process()
+    after_index_mem = process.memory_info().rss / 1024 / 1024
+    peak_memory = after_index_mem
 
     eval_data = _get_eval_data()
-    strategies = ["hybrid", "semantic", "bm25", "fuzzy"]
+    memory_samples = []
+    latency_samples = []
+    total_score = 0
 
-    print("\n" + "=" * 100)
-    print("EVALUATION: Search Method Comparison")
-    print("=" * 100)
-    print("Comparing: Semantic vs BM25 vs Fuzzy vs Hybrid")
-    print(
-        "Scoring: Rank 1=5pts, Rank 2=4pts, Rank 3=3pts, Rank 4=2pts, Rank 5=1pt, Not found=0pts"
-    )
-    print("=" * 100)
-
-    total_scores = {strategy: 0 for strategy in strategies}
-    total_latencies = {strategy: 0.0 for strategy in strategies}
+    print(f"\n{'='*50} {strategy.upper()} {'='*50}")
+    print(f"After index: {after_index_mem:.2f} MB")
+    print(f"Embedding cache created: {search_engine._embedding_cache is not None}")
+    print(f"BM25 cache created: {search_engine._bm25_cache is not None}")
 
     for idx, eval_item in enumerate(eval_data, 1):
         question = eval_item["question"]
         correct_table = eval_item["correct_table"]
 
-        print(f"\n--- Question {idx} ---")
-        print(f"Q: {question}")
-        print(f"Correct Answer: {correct_table}")
-
-        for strategy in strategies:
-            response = search_engine.search(question, search_type=strategy, hops=1)
-            results = response["results"]
-            score = _calculate_score(results, correct_table)
-
-            total_scores[strategy] += score
-            total_latencies[strategy] += response["latency_sec"]
-
-            _print_results(
-                strategy.capitalize(),
-                results,
-                correct_table,
-                score,
-                response["latency_sec"],
-            )
-
-    print("\n" + "=" * 100)
-    print("FINAL SCORES")
-    print("=" * 100)
-    max_possible_score = len(eval_data) * 5
-    num_questions = len(eval_data)
-
-    for strategy in strategies:
-        print(
-            f"{strategy.capitalize():10s} {total_scores[strategy]}/{max_possible_score} "
-            f"(avg latency: {total_latencies[strategy]/num_questions:.3f}s)"
+        before_mem = process.memory_info().rss / 1024 / 1024
+        response = search_engine.search(
+            question, search_type=cast(SearchType, strategy), hops=1
         )
+        after_mem = process.memory_info().rss / 1024 / 1024
+
+        peak_memory = max(peak_memory, after_mem)
+        memory_samples.append(after_mem)
+        latency_samples.append(response["latency_sec"])
+
+        score = _calculate_score(response["results"], correct_table)
+        total_score += score
+
+        marker = "✓" if score > 0 else "✗"
+        print(
+            f"  Q{idx}: {marker} Score: {score} | "
+            f"Latency: {response['latency_sec']:.3f}s | "
+            f"Mem: {after_mem:.1f}MB ({after_mem - before_mem:+.1f})"
+        )
+
+    avg_memory = sum(memory_samples) / len(memory_samples)
+    avg_latency = sum(latency_samples) / len(latency_samples)
+    memory_increase = peak_memory - after_index_mem
+    max_score = len(eval_data) * 5
+
+    print(f"\n{'='*50} SUMMARY {'='*50}")
+    print(f"Score: {total_score}/{max_score}")
+    print(f"Avg Latency: {avg_latency:.3f}s")
+    print(f"Peak Memory: {peak_memory:.2f} MB")
+    print(f"Avg Memory: {avg_memory:.2f} MB")
+    print(f"Memory Increase: +{memory_increase:.2f} MB")
+    if search_engine._embedding_cache:
+        print(
+            f"Embeddings loaded: {search_engine._embedding_cache.embeddings is not None}"
+        )
+    if search_engine._bm25_cache:
+        print(f"BM25 built: {search_engine._bm25_cache.bm25 is not None}")
     print("=" * 100)
 
-    assert len(eval_data) > 0, "No evaluation data provided"
-    for score in total_scores.values():
-        assert score >= 0, "Invalid score"
+
+def test_bm25_no_embeddings(database_url, llm_config):
+    """Test that BM25 search does NOT load embedding models or cache."""
+    engine = create_engine(database_url)
+    search = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search.index(force=False)
+
+    assert search._embedding_cache is None, "Embedding cache should not be created yet"
+    assert search._reranker is None, "Reranker should not be created yet"
+
+    result = search.search("user email", search_type="bm25", limit=5)
+
+    assert search._embedding_cache is None, "BM25 should not load embedding cache"
+    assert len(result["results"]) > 0, "Should have results"
+
+    print("\n✓ BM25 search verified: no embeddings loaded")
+
+
+def test_fuzzy_no_embeddings(database_url, llm_config):
+    """Test that fuzzy search does NOT load embedding models or cache."""
+    engine = create_engine(database_url)
+    search = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search.index(force=False)
+
+    assert search._embedding_cache is None, "Embedding cache should not be created yet"
+    assert search._reranker is None, "Reranker should not be created yet"
+
+    result = search.search("user email", search_type="fuzzy", limit=5)
+
+    assert search._embedding_cache is None, "Fuzzy should not load embedding cache"
+    assert len(result["results"]) > 0, "Should have results"
+
+    print("\n✓ Fuzzy search verified: no embeddings loaded")
+
+
+def test_semantic_loads_embeddings(database_url, llm_config):
+    """Test that semantic search DOES load embedding models and cache."""
+    engine = create_engine(database_url)
+    search = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search.index(force=False)
+
+    assert search._embedding_cache is None, "Embedding cache should not be created yet"
+
+    result = search.search("user email", search_type="semantic", limit=5)
+
+    assert search._embedding_cache is not None, "Semantic should create embedding cache"
+    assert search.embedding_cache.embeddings is not None, "Embeddings should be loaded"
+    assert len(result["results"]) > 0, "Should have results"
+
+    print("\n✓ Semantic search verified: embeddings loaded correctly")
+
+
+def test_hybrid_loads_embeddings(database_url, llm_config):
+    """Test that hybrid search DOES load embedding models and cache."""
+    engine = create_engine(database_url)
+    search = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search.index(force=False)
+
+    assert search._embedding_cache is None, "Embedding cache should not be created yet"
+
+    result = search.search("user email", search_type="hybrid", limit=5)
+
+    assert search._embedding_cache is not None, "Hybrid should create embedding cache"
+    assert search.embedding_cache.embeddings is not None, "Embeddings should be loaded"
+    assert len(result["results"]) > 0, "Should have results"
+
+    print("\n✓ Hybrid search verified: embeddings loaded correctly")
+
+
+def test_strategy_caching(database_url, llm_config):
+    """Test that search strategies are cached and reused."""
+    engine = create_engine(database_url)
+    search = SchemaSearch(
+        engine,
+        llm_api_key=llm_config["api_key"],
+        llm_base_url=llm_config["base_url"],
+    )
+
+    search.index(force=False)
+
+    assert len(search._search_strategies) == 0, "No strategies cached initially"
+
+    search.search("test query", search_type="bm25", limit=5)
+    assert "bm25" in search._search_strategies, "BM25 strategy should be cached"
+    assert len(search._search_strategies) == 1, "Only one strategy cached"
+
+    bm25_strategy = search._search_strategies["bm25"]
+    search.search("another query", search_type="bm25", limit=5)
+    assert (
+        search._search_strategies["bm25"] is bm25_strategy
+    ), "Same strategy instance should be reused"
+
+    search.search("test query", search_type="fuzzy", limit=5)
+    assert "fuzzy" in search._search_strategies, "Fuzzy strategy should be cached"
+    assert len(search._search_strategies) == 2, "Two strategies cached now"
+
+    print("\n✓ Strategy caching verified: strategies are reused")

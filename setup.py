@@ -27,6 +27,7 @@ setup(
         "test": [
             "pytest>=7.0.0",
             "python-dotenv>=1.0.0",
+            "psutil>=5.9.0",
         ],
         "postgres": [
             "psycopg2-binary>=2.9.0",

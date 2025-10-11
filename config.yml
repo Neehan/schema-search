@@ -16,16 +16,16 @@ chunking:
   model: "claude-3-5-haiku-latest"
 
 search:
-  # Search strategy: "semantic" (embeddings), "bm25" (BM25 lexical), "fuzzy" (fuzzy string matching), "hybrid" (semantic + fuzzy)
-  strategy: "semantic"
+  # Search strategy: "semantic" (embeddings), "bm25" (BM25 lexical), "fuzzy" (fuzzy string matching), "hybrid" (semantic + bm25)
+  strategy: "bm25"
   initial_top_k: 20
   rerank_top_k: 5
-  semantic_weight: 0.67 # For hybrid search (fuzzy_weight = 1 - semantic_weight)
+  semantic_weight: 0.33 # For hybrid search (bm25_weight = 1 - semantic_weight)
   hops: 1 # Number of foreign key hops for graph expansion (0-2 recommended)
 
 reranker:
   # CrossEncoder model for reranking. Set to null to disable reranking
-  model: null #"Alibaba-NLP/gte-reranker-modernbert-base"
+  model: "Alibaba-NLP/gte-reranker-modernbert-base"
 
 schema:
   include_columns: true

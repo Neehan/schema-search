@@ -23,7 +23,7 @@ class BaseEmbeddingCache(ABC):
         self.metric = metric
         self.batch_size = batch_size
         self.show_progress = show_progress
-        self.embeddings: np.ndarray
+        self.embeddings = None
 
     @abstractmethod
     def load_or_generate(

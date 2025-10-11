@@ -94,8 +94,8 @@ for result in results['results']:
     print(result['schema'])           # Full column info, types, constraints
     print(result['related_tables'])   # ["users", "payments", "transactions"]
 
-# Override search strategy
-results = search.search("user_table", search_type="fuzzy")
+# Override hops, limit, search strategy
+results = search.search("user_table", hops=0, limit=5, search_type="fuzzy")
 ```
 
 ## Configuration
