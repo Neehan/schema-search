@@ -24,7 +24,7 @@ search:
 
 reranker:
   # CrossEncoder model for reranking. Set to null to disable reranking
-  model: "Alibaba-NLP/gte-reranker-modernbert-base"
+  model: #"Alibaba-NLP/gte-reranker-modernbert-base"
 
 schema:
   include_columns: true

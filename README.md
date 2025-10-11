@@ -72,7 +72,7 @@ reranker:
   model: "cross-encoder/ms-marco-MiniLM-L-6-v2"  # Set to null to disable reranking
 ```
 
-### Search Strategies
+## Search Strategies
 
 Schema Search supports four search strategies:
 
@@ -82,6 +82,22 @@ Schema Search supports four search strategies:
 - **hybrid**: Combines semantic and fuzzy scores (default: 67% semantic, 33% fuzzy)
 
 Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
+
+## Performance Comparison
+
+![Strategy Comparison](img/strategy_comparison.png)
+
+Tested on a database with 26 tables using the sample `config.yml`:
+
+### With Reranker (`Alibaba-NLP/gte-reranker-modernbert-base`)
+
+- Reranking adds ~500ms latency but significantly improves accuracy
+- BM25 struggles with semantic queries (40/50)
+
+### Without Reranker** (set `reranker.model: null`):
+- Semantic is most accurate (44/50) and fastest (26ms)
+- Hybrid trades some accuracy for fuzzy matching capability (38/50)
+- 10-30x faster but less accurate overall
 
 You can override the search strategy at query time:
 

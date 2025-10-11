@@ -155,7 +155,7 @@ def test_search_comparison_with_without_graph(search_engine):
     search_engine.index(force=True)
 
     eval_data = _get_eval_data()
-    strategies = ["semantic", "bm25", "fuzzy", "hybrid"]
+    strategies = ["hybrid", "semantic", "bm25", "fuzzy"]
 
     print("\n" + "=" * 100)
     print("EVALUATION: Search Method Comparison")
