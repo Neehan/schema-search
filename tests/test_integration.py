@@ -96,9 +96,9 @@ def _calculate_score(results, correct_table):
     return 0
 
 
-def _print_results(label, results, correct_table, score):
+def _print_results(label, results, correct_table, score, latency):
     """Print search results with score."""
-    print(f"\n{label} - Score: {score}/5")
+    print(f"\n{label} - Score: {score}/5 - Latency: {latency:.3f}s")
     for i, result in enumerate(results[:5], 1):
         marker = " ✓" if result["table"] == correct_table else ""
         print(f"  {i}. {result['table']} (score: {result['score']:.3f}){marker}")
@@ -167,6 +167,11 @@ def test_search_comparison_with_without_graph(search_engine):
     print("=" * 100)
 
     total_scores = {"semantic_no_graph": 0, "semantic_with_graph": 0, "fuzzy": 0}
+    total_latencies = {
+        "semantic_no_graph": 0.0,
+        "semantic_with_graph": 0.0,
+        "fuzzy": 0.0,
+    }
 
     for idx, eval_item in enumerate(eval_data, 1):
         question = eval_item["question"]
@@ -192,32 +197,53 @@ def test_search_comparison_with_without_graph(search_engine):
         total_scores["semantic_with_graph"] += score_with_graph
         total_scores["fuzzy"] += score_fuzzy
 
+        total_latencies["semantic_no_graph"] += response_no_graph["latency_sec"]
+        total_latencies["semantic_with_graph"] += response_with_graph["latency_sec"]
+        total_latencies["fuzzy"] += response_fuzzy["latency_sec"]
+
         print(f"\n--- Question {idx} ---")
         print(f"Q: {question}")
         print(f"Correct Answer: {correct_table}")
 
         _print_results(
-            "Semantic (hops=0)", results_no_graph, correct_table, score_no_graph
+            "Semantic (hops=0)",
+            results_no_graph,
+            correct_table,
+            score_no_graph,
+            response_no_graph["latency_sec"],
         )
         _print_results(
             f"Semantic (hops={hops_with_graph})",
             results_with_graph,
             correct_table,
             score_with_graph,
+            response_with_graph["latency_sec"],
         )
-        _print_results("Fuzzy", results_fuzzy, correct_table, score_fuzzy)
+        _print_results(
+            "Fuzzy",
+            results_fuzzy,
+            correct_table,
+            score_fuzzy,
+            response_fuzzy["latency_sec"],
+        )
 
     print("\n" + "=" * 100)
     print("FINAL SCORES")
     print("=" * 100)
     max_possible_score = len(eval_data) * 5
+    num_questions = len(eval_data)
     print(
-        f"Semantic (hops=0):      {total_scores['semantic_no_graph']}/{max_possible_score}"
+        f"Semantic (hops=0):      {total_scores['semantic_no_graph']}/{max_possible_score} "
+        f"(avg latency: {total_latencies['semantic_no_graph']/num_questions:.3f}s)"
     )
     print(
-        f"Semantic (hops=1):      {total_scores['semantic_with_graph']}/{max_possible_score}"
+        f"Semantic (hops=1):      {total_scores['semantic_with_graph']}/{max_possible_score} "
+        f"(avg latency: {total_latencies['semantic_with_graph']/num_questions:.3f}s)"
     )
-    print(f"Fuzzy:                  {total_scores['fuzzy']}/{max_possible_score}")
+    print(
+        f"Fuzzy:                  {total_scores['fuzzy']}/{max_possible_score} "
+        f"(avg latency: {total_latencies['fuzzy']/num_questions:.3f}s)"
+    )
     print("=" * 100)
 
     assert len(eval_data) > 0, "No evaluation data provided"

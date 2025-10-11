@@ -1,4 +1,4 @@
-# schema-search
+# Schema Search MCP Server
 
 Ask questions about your database in natural language. Get back the exact tables you need, with all their relationships mapped out.
 
@@ -15,7 +15,17 @@ Or just ask the database directly.
 ## Install
 
 ```bash
-pip install -e .
+# PostgreSQL
+pip install schema-search[postgres,mcp]
+
+# MySQL
+pip install schema-search[mysql,mcp]
+
+# Snowflake
+pip install schema-search[snowflake,mcp]
+
+# BigQuery
+pip install schema-search[bigquery,mcp]
 ```
 
 ## Use
@@ -77,6 +87,39 @@ search = SchemaSearch(
 4. Return top tables with relationships
 
 Cache stored in `.schema_search_cache/`.
+
+## Performance
+
+Tested on a realistic database with 25 tables and 200+ columns. Average query latency: **<40ms**.
+
+## MCP Server
+
+Integrate with Claude Desktop or any MCP client.
+
+### Setup
+
+Add to your MCP config (e.g., `~/.cursor/mcp.json` or Claude Desktop config):
+
+```json
+{
+  "mcpServers": {
+    "schema-search": {
+      "command": "schema-search-mcp",
+      "args": ["postgresql://user:pass@localhost/db"]
+    }
+  }
+}
+```
+
+### CLI Usage
+
+```bash
+schema-search-mcp "postgresql://user:pass@localhost/db"
+```
+
+Optional args: `[llm_api_key] [llm_base_url] [config_path]`
+
+The server exposes `schema_search(query, hops, limit)` for natural language schema queries.
 
 ## License
 

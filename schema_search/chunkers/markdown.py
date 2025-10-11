@@ -6,13 +6,12 @@ class MarkdownChunker(BaseChunker):
     def _generate_content(self, table_name: str, schema: TableSchema) -> str:
         lines = [f"Table: {table_name}"]
 
+        if schema["primary_keys"]:
+            lines.append(f"Primary keys: {', '.join(schema['primary_keys'])}")
+
         if schema["columns"]:
             col_names = [col["name"] for col in schema["columns"]]
-            cols_per_line = 10
-            for i in range(0, len(col_names), cols_per_line):
-                batch = col_names[i : i + cols_per_line]
-                col_names_str = ", ".join(batch)
-                lines.append(f"Columns:{col_names_str}")
+            lines.append(f"Columns: {', '.join(col_names)}")
 
         if schema["foreign_keys"]:
             related = [fk["referred_table"] for fk in schema["foreign_keys"]]

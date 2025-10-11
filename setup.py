@@ -3,8 +3,11 @@ from setuptools import setup, find_packages
 setup(
     name="schema-search",
     version="0.1.0",
-    description="Lightweight database metadata search with embeddings and graph-based discovery",
+    description="Natural language search for database schemas with graph-aware semantic retrieval",
     author="",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/neehan/schema-search",
     packages=find_packages(),
     install_requires=[
         "sqlalchemy>=1.4.0",
@@ -18,6 +21,9 @@ setup(
         "rapidfuzz>=3.0.0",
     ],
     extras_require={
+        "mcp": [
+            "fastmcp>=2.0.0",
+        ],
         "test": [
             "pytest>=7.0.0",
             "python-dotenv>=1.0.0",
@@ -28,6 +34,28 @@ setup(
         "mysql": [
             "pymysql>=1.0.0",
         ],
+        "snowflake": [
+            "snowflake-sqlalchemy>=1.4.0",
+            "snowflake-connector-python>=3.0.0",
+        ],
+        "bigquery": [
+            "sqlalchemy-bigquery>=1.6.0",
+        ],
+    },
+    entry_points={
+        "console_scripts": [
+            "schema-search-mcp=schema_search.mcp_server:main",
+        ],
     },
     python_requires=">=3.8",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+    ],
 )
