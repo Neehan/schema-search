@@ -41,9 +41,9 @@ def schema_search(
 
 def run_server(
     database_url: str,
+    config_path: Optional[str] = None,
     llm_api_key: Optional[str] = None,
     llm_base_url: Optional[str] = None,
-    config_path: Optional[str] = None,
 ):
     engine = create_engine(database_url)
 
@@ -66,16 +66,16 @@ def main():
 
     if len(sys.argv) < 2:
         print(
-            "Usage: schema-search-mcp <database_url> [llm_api_key] [llm_base_url] [config_path]"
+            "Usage: schema-search-mcp <database_url> [config_path] [llm_api_key] [llm_base_url]"
         )
         sys.exit(1)
 
     database_url = sys.argv[1]
-    llm_api_key = sys.argv[2] if len(sys.argv) > 2 else None
-    llm_base_url = sys.argv[3] if len(sys.argv) > 3 else None
-    config_path = sys.argv[4] if len(sys.argv) > 4 else None
+    config_path = sys.argv[2] if len(sys.argv) > 2 else None
+    llm_api_key = sys.argv[3] if len(sys.argv) > 3 else None
+    llm_base_url = sys.argv[4] if len(sys.argv) > 4 else None
 
-    run_server(database_url, llm_api_key, llm_base_url, config_path)
+    run_server(database_url, config_path, llm_api_key, llm_base_url)
 
 
 if __name__ == "__main__":

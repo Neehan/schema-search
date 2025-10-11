@@ -46,7 +46,7 @@ Add to your MCP config (e.g., `~/.cursor/mcp.json` or Claude Desktop config):
   "mcpServers": {
     "schema-search": {
       "command": "uvx",
-      "args": ["schema-search[postgres,mcp]", "postgresql://user:pass@localhost/db", "optional llm_api_key", "optional llm_base_url", "optional config.yml path"]
+      "args": ["schema-search[postgres,mcp]", "postgresql://user:pass@localhost/db", "optional config.yml path", "optional llm_api_key", "optional llm_base_url"]
     }
   }
 }
@@ -58,14 +58,14 @@ Add to your MCP config (e.g., `~/.cursor/mcp.json` or Claude Desktop config):
   "mcpServers": {
     "schema-search": {
       "command": "path/to/schema-search-mcp", // conda: /Users/<username>/opt/miniconda3/envs/<your env>/bin/schema-search-mcp",
-      "args": ["postgresql://user:pass@localhost/db", "optional llm_api_key", "optional llm_base_url", "optional config.yml path"]
+      "args": ["postgresql://user:pass@localhost/db", "optional config.yml path", "optional llm_api_key", "optional llm_base_url"]
     }
   }
 }
 ```
 
 
-The LLM API key and base url are only required for LLM-generated schema summaries (`config.chunking.strategy = 'llm'`).
+The LLM API key and base url are only required if you use LLM-generated schema summaries (`config.chunking.strategy = 'llm'`).
 
 ### CLI Usage
 
@@ -73,7 +73,7 @@ The LLM API key and base url are only required for LLM-generated schema summarie
 schema-search-mcp "postgresql://user:pass@localhost/db"
 ```
 
-Optional args: `[llm_api_key] [llm_base_url] [config_path]`
+Optional args: `[config_path] [llm_api_key] [llm_base_url]`
 
 The server exposes `schema_search(query, hops, limit)` for natural language schema queries.
 
