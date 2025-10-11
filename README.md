@@ -192,11 +192,7 @@ search = SchemaSearch(
 5. **Optional reranking** with CrossEncoder to refine results
 6. Return top tables with full schema and relationships
 
-Cache stored in `.schema_search_cache/`.
-
-## Performance
-
-Tested on a realistic database with 25 tables and 200+ columns. Average query latency: **<40ms**.
+Cache stored in `.schema_search_cache/` (configurable in `config.yml`)
 
 ## License
 
