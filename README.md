@@ -159,14 +159,14 @@ We [benchmarked](/tests/test_spider_eval.py) on the Spider dataset (1,234 train 
 **Memory:** The embedding model requires ~90 MB and the optional reranker adds ~155 MB. Actual process memory depends on your Python runtime.
 
 ### Without Reranker (`reranker.model: null`)
-![Without Reranker](img/spider_benchmark_without_reranker.png)
+![Without Reranker](https://raw.githubusercontent.com/Neehan/schema-search/refs/heads/main/img/spider_benchmark_without_reranker.png)
 - **Indexing:** 0.22s ± 0.08s per database (18 total).
 - **Accuracy:** Hybrid leads with Recall@1 62% / MRR 0.93; Semantic follows at Recall@1 58% / MRR 0.89.
 - **Latency:** BM25 and Fuzzy return in ~5ms; Semantic spends ~15ms; Hybrid (semantic + fuzzy) averages 52ms.
 - **Fuzzy baseline:** Recall@1 22%, highlighting the need for semantic signals on natural-language queries.
 
 ### With Reranker (`Alibaba-NLP/gte-reranker-modernbert-base`)
-![With Reranker](img/spider_benchmark_with_reranker.png)
+![With Reranker](https://raw.githubusercontent.com/Neehan/schema-search/refs/heads/main/img/spider_benchmark_with_reranker.png)
 - **Indexing:** 0.25s ± 0.05s per database (same 18 DBs).
 - **Accuracy:** All strategies converge around Recall@1 62% and MRR ≈ 0.92; Fuzzy jumps from 51% → 92% MRR.
 - **Latency trade-off:** Extra CrossEncoder pass lifts per-query latency to ~0.18–0.29s depending on strategy.
@@ -216,7 +216,7 @@ search = SchemaSearch(
 5. **Optional reranking** with CrossEncoder to refine results
 6. Return top tables with full schema and relationships
 
-Cache stored in `.schema_search_cache/` (configurable in `config.yml`)
+Cache stored in `/tmp/.schema_search_cache/` (configurable in `config.yml`)
 
 ## License
 

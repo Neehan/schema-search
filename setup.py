@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name="schema-search",
-    version="0.1.5",
-    description="Natural language search for database schemas with graph-aware semantic retrieval",
-    author="",
+    version="0.1.6",
+    description="Natural language database schema search with graph-aware semantic retrieval",
+    author="Adib Hasan",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/neehan/schema-search",
+    url="https://adibhasan.com/blog/schema-search/",
     packages=find_packages(),
     install_requires=[
         "sqlalchemy>=1.4.0",
