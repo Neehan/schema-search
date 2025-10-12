@@ -90,10 +90,23 @@ class SchemaSearch:
     def index(self, force: bool = False) -> IndexResult:
         logger.info("Starting schema indexing" + (" (force)" if force else ""))
 
-        self.schemas = self._load_or_extract_schemas(force)
-        self.graph_builder.build(self.schemas, force)
-        self.chunks = self._load_or_generate_chunks(self.schemas, force)
-        self._index_force = force
+        current_schema = self._extract_current_schema()
+
+        schema_changed = False
+        if not force:
+            cached_schema = self._load_cached_schema()
+            schema_changed = self._schema_has_changed(cached_schema, current_schema)
+            if schema_changed:
+                logger.info("Schema change detected; forcing reindex")
+
+        self._cache_schema(current_schema)
+
+        effective_force = force or schema_changed
+
+        self.schemas = current_schema
+        self.graph_builder.build(self.schemas, effective_force)
+        self.chunks = self._load_or_generate_chunks(self.schemas, effective_force)
+        self._index_force = effective_force
 
         logger.info(
             f"Indexing complete: {len(self.schemas)} tables, {len(self.chunks)} chunks"
@@ -104,21 +117,37 @@ class SchemaSearch:
             "latency_sec": 0.0,
         }
 
-    def _load_or_extract_schemas(self, force: bool) -> Dict[str, TableSchema]:
+    def _extract_current_schema(self) -> Dict[str, TableSchema]:
+        logger.info("Extracting schema from database")
+        return self.schema_extractor.extract()
+
+    def _load_cached_schema(self) -> Optional[Dict[str, TableSchema]]:
         schema_cache = self.cache_dir / "metadata.json"
 
-        if not force and schema_cache.exists():
-            logger.debug(f"Loading schemas from cache: {schema_cache}")
-            with open(schema_cache) as f:
-                return json.load(f)
+        if not schema_cache.exists():
+            logger.debug("Schema cache missing; treating as schema change")
+            return None
 
-        logger.info("Extracting schema from database")
-        schemas = self.schema_extractor.extract()
+        with open(schema_cache) as f:
+            return json.load(f)
 
+    def _cache_schema(self, schema: Dict[str, TableSchema]) -> None:
+        schema_cache = self.cache_dir / "metadata.json"
         with open(schema_cache, "w") as f:
-            json.dump(schemas, f, indent=2)
+            json.dump(schema, f, indent=2)
 
-        return schemas
+    def _schema_has_changed(
+        self,
+        cached_schema: Optional[Dict[str, TableSchema]],
+        current_schema: Dict[str, TableSchema],
+    ) -> bool:
+        if cached_schema is None:
+            return True
+        if cached_schema != current_schema:
+            logger.debug("Cached schema differs from current schema")
+            return True
+        logger.debug("Schema matches cached version; reuse existing index")
+        return False
 
     def _load_or_generate_chunks(
         self, schemas: Dict[str, TableSchema], force: bool
