@@ -25,14 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
 
-      - name: Verify optional extras (non-failing)
-        continue-on-error: true
-        run: |
-          for extra in postgres mysql snowflake bigquery mcp; do
-            echo "Checking install for [$extra]"
-            pip install -e ".[${extra}]" || true
-          done
-
       - name: Build package
         run: python -m build
 
