@@ -95,7 +95,7 @@ for result in results['results']:
     print(result['related_tables'])   # ["users", "payments", "transactions"]
 
 # Override hops, limit, search strategy
-results = search.search("user_table", hops=0, limit=5, search_type="fuzzy")
+results = search.search("user_table", hops=0, limit=5, search_type="semantic")
 ```
 
 ## Configuration
@@ -109,13 +109,13 @@ embedding:
   metric: "cosine"
 
 chunking:
-  strategy: "markdown"  # or "llm"
+  strategy: "raw"  # or "llm"
 
 search:
   strategy: "semantic"  # "semantic", "bm25", "fuzzy", or "hybrid"
   initial_top_k: 20
   rerank_top_k: 5
-  semantic_weight: 0.67  # For hybrid search (fuzzy_weight = 1 - semantic_weight)
+  semantic_weight: 0.67  # For hybrid search (bm25_weight = 1 - semantic_weight)
 
 reranker:
   model: "Alibaba-NLP/gte-reranker-modernbert-base"  # Set to null to disable reranking
@@ -128,7 +128,7 @@ Schema Search supports four search strategies:
 - **semantic**: Embedding-based similarity search using sentence transformers
 - **bm25**: Lexical search using BM25 ranking algorithm
 - **fuzzy**: String matching on table/column names using fuzzy matching
-- **hybrid**: Combines semantic and fuzzy scores (default: 67% semantic, 33% fuzzy)
+- **hybrid**: Combines semantic and bm25 scores (default: 67% semantic, 33% fuzzy)
 
 Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
 
