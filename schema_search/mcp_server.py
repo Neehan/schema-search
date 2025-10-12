@@ -66,7 +66,7 @@ def main():
 
     if len(sys.argv) < 2:
         print(
-            "Usage: schema-search-mcp <database_url> [config_path] [llm_api_key] [llm_base_url]"
+            "Usage: schema-search <database_url> [config_path] [llm_api_key] [llm_base_url]"
         )
         sys.exit(1)
 

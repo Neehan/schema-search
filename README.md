@@ -57,7 +57,7 @@ Add to your MCP config (e.g., `~/.cursor/mcp.json` or Claude Desktop config):
 {
   "mcpServers": {
     "schema-search": {
-      "command": "path/to/schema-search-mcp", // conda: /Users/<username>/opt/miniconda3/envs/<your env>/bin/schema-search-mcp",
+      "command": "path/to/schema-search", // conda: /Users/<username>/opt/miniconda3/envs/<your env>/bin/schema-search",
       "args": ["postgresql://user:pass@localhost/db", "optional config.yml path", "optional llm_api_key", "optional llm_base_url"]
     }
   }
@@ -70,7 +70,7 @@ The LLM API key and base url are only required if you use LLM-generated schema s
 ### CLI Usage
 
 ```bash
-schema-search-mcp "postgresql://user:pass@localhost/db"
+schema-search "postgresql://user:pass@localhost/db"
 ```
 
 Optional args: `[config_path] [llm_api_key] [llm_base_url]`

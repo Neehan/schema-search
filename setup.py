@@ -46,7 +46,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "schema-search-mcp=schema_search.mcp_server:main",
+            "schema-search=schema_search.mcp_server:main",
         ],
     },
     python_requires=">=3.8",
