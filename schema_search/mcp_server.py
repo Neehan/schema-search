@@ -16,7 +16,6 @@ mcp = FastMCP("schema-search")
 @mcp.tool()
 def schema_search(
     query: str,
-    hops: Optional[int] = None,
     limit: int = 5,
 ) -> dict:
     """Search database schema using natural language.
@@ -25,14 +24,14 @@ def schema_search(
     using semantic similarity. Expands results by traversing foreign key relationships.
 
     Args:
-        query: Natural language question about database schema (e.g., 'where are user refunds stored?', 'tables related to payments')
-        hops: Number of foreign key relationship hops for graph expansion. Use 0 for exact matches only, 1-2 to include related tables. If not specified, uses value from config.yml (default: 1)
-        limit: Maximum number of table schemas to return in results. Default: 5
+        query: Natural language question about database schema (e.g., 'tables related to payments')
+        limit: Maximum number of table schemas to return in results. Default: 5; Max: 10.
 
     Returns:
         Dictionary with 'results' (list of table schemas with columns, types, constraints, and relationships) and 'latency_sec' (query execution time)
     """
-    search_result = mcp.search_engine.search(query, hops=hops, limit=limit)  # type: ignore
+    limit = min(limit, 10)
+    search_result = mcp.search_engine.search(query, limit=limit)  # type: ignore
     return {
         "results": search_result["results"],
         "latency_sec": search_result["latency_sec"],

@@ -162,7 +162,7 @@ Schema Search supports four search strategies:
 - **semantic**: Embedding-based similarity search using sentence transformers
 - **bm25**: Lexical search using BM25 ranking algorithm
 - **fuzzy**: String matching on table/column names using fuzzy matching
-- **hybrid**: Combines semantic and bm25 scores (default: 67% semantic, 33% fuzzy)
+- **hybrid**: Combines semantic and bm25 scores (default: 67% semantic, 33% bm25)
 
 Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
 
