@@ -133,7 +133,7 @@ Schema Search supports four search strategies:
 Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
 
 ## Performance Comparison
-We [benchmarked](/tests/test_spider_eval.py) on the Spider dataset (1,234 train queries across 18 databases) using the default configuration.  
+We [benchmarked](/tests/test_spider_eval.py) on the Spider dataset (1,234 train queries across 18 databases) using the default `config.yml`.  
 
 **Memory:** The embedding model requires ~90 MB and the optional reranker adds ~155 MB. Actual process memory depends on your Python runtime.
 
