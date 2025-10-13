@@ -138,7 +138,12 @@ from sqlalchemy import create_engine
 from schema_search import SchemaSearch
 
 engine = create_engine("postgresql://user:pass@localhost/db")
-search = SchemaSearch(engine)
+search = SchemaSearch(
+  engine=engine, 
+  config_path="optional/path/to/config.yml", # default: config.yml
+  llm_api_key="optional llm api key", 
+  llm_base_url="optional llm base url"
+  )
 
 search.index(force=False) # default is False
 results = search.search("where are user refunds stored?")
