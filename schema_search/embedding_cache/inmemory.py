@@ -1,14 +1,17 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from schema_search.chunkers import Chunk
 from schema_search.embedding_cache.base import BaseEmbeddingCache
 from schema_search.metrics import get_metric
+from schema_search.utils.lazy_import import lazy_import_check
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ class InMemoryEmbeddingCache(BaseEmbeddingCache):
         show_progress: bool,
     ):
         super().__init__(cache_dir, model_name, metric, batch_size, show_progress)
-        self.model: SentenceTransformer
+        self.model: Optional["SentenceTransformer"] = None
 
     def load_or_generate(
         self, chunks: List[Chunk], force: bool, chunking_config: Dict
@@ -73,6 +76,7 @@ class InMemoryEmbeddingCache(BaseEmbeddingCache):
         logger.info(f"Generating embeddings for {len(chunks)} chunks")
         texts = [chunk.content for chunk in chunks]
 
+        assert self.model is not None
         self.embeddings = self.model.encode(
             texts,
             batch_size=self.batch_size,
@@ -92,13 +96,19 @@ class InMemoryEmbeddingCache(BaseEmbeddingCache):
 
     def _load_model(self) -> None:
         if self.model is None:
+            sentence_transformers = lazy_import_check(
+                "sentence_transformers",
+                "semantic",
+                "semantic/hybrid search or reranking",
+            )
             logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
-            self.model = SentenceTransformer(self.model_name)
+            self.model = sentence_transformers.SentenceTransformer(self.model_name)
             logger.info(f"Loaded embedding model: {self.model_name}")
 
     def encode_query(self, query: str) -> np.ndarray:
         self._load_model()
 
+        assert self.model is not None
         query_emb = self.model.encode(
             [query],
             batch_size=self.batch_size,

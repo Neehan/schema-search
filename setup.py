@@ -11,16 +11,20 @@ setup(
     packages=find_packages(),
     install_requires=[
         "sqlalchemy>=1.4.0",
-        "sentence-transformers>=2.2.0",
         "networkx>=2.8.0",
         "bm25s>=0.2.0",
         "numpy>=1.21.0",
         "pyyaml>=6.0",
         "tqdm>=4.65.0",
-        "openai>=1.0.0",
         "rapidfuzz>=3.0.0",
     ],
     extras_require={
+        "semantic": [
+            "sentence-transformers>=2.2.0",
+        ],
+        "llm": [
+            "openai>=1.0.0",
+        ],
         "mcp": [
             "fastmcp>=2.0.0",
         ],

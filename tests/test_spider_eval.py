@@ -108,6 +108,10 @@ def create_database_from_schema(db_id: str, schema_str: str):
     """
     safe_db_id = db_id.lower().replace("-", "_")
 
+    assert (
+        "localhost" in DATABASE_URL
+    ), "DATABASE_URL must be a test database on localhost"
+
     admin_engine = create_engine(
         DATABASE_URL, isolation_level="AUTOCOMMIT", pool_pre_ping=True, pool_recycle=60
     )

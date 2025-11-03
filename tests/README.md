@@ -5,13 +5,8 @@
 1. Install test dependencies with database driver:
    ```bash
    # For PostgreSQL (use quotes for zsh)
-   pip install -e ".[test,postgres]"
+   pip install -e ".[test,postgres,semantic,llm]"
    
-   # For MySQL
-   pip install -e ".[test,mysql]"
-   
-   # With LLM summarization
-   pip install -e ".[test,postgres]"
    ```
 
 2. Create a `.env` file in the `tests/` directory:

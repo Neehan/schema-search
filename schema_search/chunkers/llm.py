@@ -1,11 +1,13 @@
 import json
 import logging
-from typing import Optional
-
-from openai import OpenAI
+from typing import Optional, TYPE_CHECKING
 
 from schema_search.chunkers.base import BaseChunker
 from schema_search.types import TableSchema
+from schema_search.utils.lazy_import import lazy_import_check
+
+if TYPE_CHECKING:
+    from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,8 @@ class LLMChunker(BaseChunker):
     ):
         super().__init__(max_tokens, overlap_tokens, show_progress)
         self.model = model
-        self.llm_client = OpenAI(api_key=llm_api_key, base_url=llm_base_url)
+        openai = lazy_import_check("openai", "llm", "LLM-based chunking")
+        self.llm_client: "OpenAI" = openai.OpenAI(api_key=llm_api_key, base_url=llm_base_url)
         logger.info(f"Schema Summarizer Model: {self.model}")
 
     def _generate_content(self, table_name: str, schema: TableSchema) -> str:

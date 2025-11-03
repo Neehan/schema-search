@@ -54,12 +54,7 @@ class SchemaSearch:
         self.chunks: List[Chunk] = []
         self.cache_dir = cache_dir
 
-        chunking_strategy = self.config["chunking"]["strategy"]
-        if chunking_strategy == "llm" and not llm_api_key:
-            raise ValueError(
-                "LLM chunking strategy requires llm_api_key parameter. "
-                "Pass it to SchemaSearch constructor."
-            )
+        self._validate_dependencies()
 
         self.schema_extractor = SchemaExtractor(engine, self.config)
         self.chunker = create_chunker(self.config, llm_api_key, llm_base_url)
@@ -85,6 +80,24 @@ class SchemaSearch:
 
         with open(config_path) as f:
             return yaml.safe_load(f)
+
+    def _validate_dependencies(self) -> None:
+        from schema_search.utils.lazy_import import lazy_import_check
+
+        strategy = self.config["search"]["strategy"]
+        reranker_model = self.config["reranker"]["model"]
+        chunking_strategy = self.config["chunking"]["strategy"]
+
+        needs_semantic = strategy in ("semantic", "hybrid") or reranker_model
+        if needs_semantic:
+            lazy_import_check(
+                "sentence_transformers",
+                "semantic",
+                f"{strategy} search or reranking"
+            )
+
+        if chunking_strategy == "llm":
+            lazy_import_check("openai", "llm", "LLM-based chunking")
 
     @time_it
     def index(self, force: bool = False) -> IndexResult:

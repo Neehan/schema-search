@@ -19,18 +19,31 @@ Or **build schematic embeddings of your tables, store in-memory, and query in na
 
 ## Install
 
-```bash
-# With uv - PostgreSQL (recommended)
-uv pip install "schema-search[postgres,mcp]"
+**Fast by default** - Base install uses only BM25/fuzzy search (no PyTorch):
 
-# With pip - PostgreSQL
-pip install "schema-search[postgres,mcp]"
+```bash
+# Minimal install (BM25 + fuzzy only, ~10MB)
+pip install "schema-search[postgres]"
+
+# With semantic/hybrid search support (~500MB with PyTorch)
+pip install "schema-search[postgres,semantic]"
+
+# With LLM chunking
+pip install "schema-search[postgres,semantic,llm]"
+
+# With MCP server
+pip install "schema-search[postgres,semantic,mcp]"
 
 # Other databases
-uv pip install "schema-search[mysql,mcp]"      # MySQL
-uv pip install "schema-search[snowflake,mcp]"  # Snowflake
-uv pip install "schema-search[bigquery,mcp]"   # BigQuery
+pip install "schema-search[mysql,semantic]"      # MySQL
+pip install "schema-search[snowflake,semantic]"  # Snowflake
+pip install "schema-search[bigquery,semantic]"   # BigQuery
 ```
+
+**Extras:**
+- `[semantic]`: Enables semantic/hybrid search and CrossEncoder reranking (adds sentence-transformers)
+- `[llm]`: Enables LLM-based schema chunking (adds openai)
+- `[mcp]`: MCP server support (adds fastmcp)
 
 ## Configuration
 
@@ -56,7 +69,7 @@ chunking:
 
 search:
   # Search strategy: "semantic" (embeddings), "bm25" (BM25 lexical), "fuzzy" (fuzzy string matching), "hybrid" (semantic + bm25)
-  strategy: "hybrid"
+  strategy: "bm25"
   initial_top_k: 20
   rerank_top_k: 5
   semantic_weight: 0.67 # For hybrid search (bm25_weight = 1 - semantic_weight)
@@ -154,7 +167,7 @@ for result in results['results']:
     print(result['related_tables'])   # ["users", "payments", "transactions"]
 
 # Override hops, limit, search strategy
-results = search.search("user_table", hops=0, limit=5, search_type="semantic")
+results = search.search("user_table", hops=1, limit=5, search_type="hybrid")
 
 ```
 
@@ -164,12 +177,12 @@ results = search.search("user_table", hops=0, limit=5, search_type="semantic")
 
 Schema Search supports four search strategies:
 
-- **semantic**: Embedding-based similarity search using sentence transformers
-- **bm25**: Lexical search using BM25 ranking algorithm
-- **fuzzy**: String matching on table/column names using fuzzy matching
-- **hybrid**: Combines semantic and bm25 scores (default: 67% semantic, 33% bm25)
+- **bm25**: Lexical search using BM25 ranking algorithm (no ML dependencies)
+- **fuzzy**: String matching on table/column names using fuzzy matching (no ML dependencies)
+- **semantic**: Embedding-based similarity search using sentence transformers (requires `[semantic]`)
+- **hybrid**: Combines semantic and bm25 scores (default: 67% semantic, 33% bm25) (requires `[semantic]`)
 
-Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured. Set `reranker.model` to `null` to disable reranking.
+Each strategy performs its own initial ranking, then optionally applies CrossEncoder reranking if `reranker.model` is configured (requires `[semantic]`). Set `reranker.model` to `null` to disable reranking.
 
 ## Performance Comparison
 We [benchmarked](/tests/test_spider_eval.py) on the Spider dataset (1,234 train queries across 18 databases) using the default `config.yml`.  
@@ -212,10 +225,11 @@ results = search.search("user_table", hops=0)  # Only direct matches, no foreign
 
 ### LLM Chunking
 
-Use LLM to generate semantic summaries instead of raw schema text:
+Use LLM to generate semantic summaries instead of raw schema text (requires `[llm]` extra):
 
-1. Set `strategy: "llm"` in `config.yml`
-2. Pass API credentials:
+1. Install: `pip install "schema-search[postgres,llm]"`
+2. Set `strategy: "llm"` in `config.yml`
+3. Pass API credentials:
 
 ```python
 search = SchemaSearch(
