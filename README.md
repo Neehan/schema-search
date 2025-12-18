@@ -38,6 +38,7 @@ pip install "schema-search[postgres,semantic,mcp]"
 pip install "schema-search[mysql,semantic]"      # MySQL
 pip install "schema-search[snowflake,semantic]"  # Snowflake
 pip install "schema-search[bigquery,semantic]"   # BigQuery
+pip install "schema-search[databricks,semantic]" # Databricks
 ```
 
 **Extras:**
@@ -150,16 +151,21 @@ The server exposes `schema_search(query, hops, limit)` for natural language sche
 from sqlalchemy import create_engine
 from schema_search import SchemaSearch
 
+# PostgreSQL
 engine = create_engine("postgresql://user:pass@localhost/db")
-search = SchemaSearch(
-  engine=engine, 
+
+# Databricks
+# engine = create_engine(f"databricks://token:{token}@{host}:443/{catalog}?http_path={http_path}")
+
+sc = SchemaSearch(
+  engine=engine,
   config_path="optional/path/to/config.yml", # default: config.yml
-  llm_api_key="optional llm api key", 
+  llm_api_key="optional llm api key",
   llm_base_url="optional llm base url"
   )
 
-search.index(force=False) # default is False
-results = search.search("where are user refunds stored?")
+sc.index(force=False) # default is False
+results = sc.search("where are user refunds stored?")
 
 for result in results['results']:
     print(result['table'])           # "refund_transactions"
@@ -167,11 +173,11 @@ for result in results['results']:
     print(result['related_tables'])   # ["users", "payments", "transactions"]
 
 # Override hops, limit, search strategy
-results = search.search("user_table", hops=1, limit=5, search_type="hybrid")
+results = sc.search("user_table", hops=1, limit=5, search_type="hybrid")
 
 ```
 
-`SchemaSearch.index()` automatically detects schema changes and refreshes cached metadata, so you rarely need to force a reindex manually.
+`sc.index()` automatically detects schema changes and refreshes cached metadata, so you rarely need to force a reindex manually.
 
 ## Search Strategies
 
@@ -208,19 +214,19 @@ You can override the search strategy, hops, and limit at query time:
 
 ```python
 # Use fuzzy search instead of default
-results = search.search("user_table", search_type="fuzzy")
+results = sc.search("user_table", search_type="fuzzy")
 
 # Use BM25 for keyword-based search
-results = search.search("transactions payments", search_type="bm25")
+results = sc.search("transactions payments", search_type="bm25")
 
 # Use hybrid for best of both worlds
-results = search.search("where are user refunds?", search_type="hybrid")
+results = sc.search("where are user refunds?", search_type="hybrid")
 
 # Override hops and limit
-results = search.search("user refunds", hops=2, limit=10)  # Expand 2 hops, return 10 tables
+results = sc.search("user refunds", hops=2, limit=10)  # Expand 2 hops, return 10 tables
 
 # Disable graph expansion
-results = search.search("user_table", hops=0)  # Only direct matches, no foreign key traversal
+results = sc.search("user_table", hops=0)  # Only direct matches, no foreign key traversal
 ```
 
 ### LLM Chunking
@@ -232,7 +238,7 @@ Use LLM to generate semantic summaries instead of raw schema text (requires `[ll
 3. Pass API credentials:
 
 ```python
-search = SchemaSearch(
+sc = SchemaSearch(
     engine,
     llm_api_key="sk-...",
     llm_base_url="https://api.openai.com/v1/"  # optional

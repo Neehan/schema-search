@@ -47,6 +47,9 @@ setup(
         "bigquery": [
             "sqlalchemy-bigquery>=1.6.0",
         ],
+        "databricks": [
+            "databricks-sqlalchemy>=2.0.0",
+        ],
     },
     entry_points={
         "console_scripts": [
