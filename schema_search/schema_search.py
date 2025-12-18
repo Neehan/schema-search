@@ -9,6 +9,7 @@ import yaml
 from sqlalchemy.engine import Engine
 
 from schema_search.schema_extractor import SchemaExtractor
+from schema_search.databricks_schema_extractor import DatabricksSchemaExtractor
 from schema_search.chunkers import Chunk, create_chunker
 from schema_search.embedding_cache import create_embedding_cache
 from schema_search.embedding_cache.bm25 import BM25Cache
@@ -56,7 +57,10 @@ class SchemaSearch:
 
         self._validate_dependencies()
 
-        self.schema_extractor = SchemaExtractor(engine, self.config)
+        if engine.dialect.name == "databricks":
+            self.schema_extractor = DatabricksSchemaExtractor(engine, self.config)
+        else:
+            self.schema_extractor = SchemaExtractor(engine, self.config)
         self.chunker = create_chunker(self.config, llm_api_key, llm_base_url)
         self._embedding_cache = None
         self._bm25_cache = None
