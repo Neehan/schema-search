@@ -32,3 +32,7 @@ schema:
   include_indices: true
   include_foreign_keys: true
   include_constraints: true
+
+output:
+  format: "markdown" # Options: "json", "markdown"
+  limit: 5 # Default number of results to return

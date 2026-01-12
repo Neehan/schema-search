@@ -85,6 +85,10 @@ schema:
   include_indices: true
   include_foreign_keys: true
   include_constraints: true
+
+output:
+  format: "markdown" # Options: "json", "markdown"
+  limit: 5 # Default number of results to return
 ```
 
 
@@ -154,8 +158,6 @@ from schema_search import SchemaSearch
 # PostgreSQL
 engine = create_engine("postgresql://user:pass@localhost/db")
 
-# Databricks
-# engine = create_engine(f"databricks://token:{token}@{host}:443/{catalog}?http_path={http_path}")
 
 sc = SchemaSearch(
   engine=engine,
@@ -167,17 +169,63 @@ sc = SchemaSearch(
 sc.index(force=False) # default is False
 results = sc.search("where are user refunds stored?")
 
-for result in results['results']:
+# Default output is markdown - render with str()
+print(results)  # Formatted markdown with schemas, relationships, and scores
+
+# Access underlying data as dictionary
+result_dict = results.to_dict()
+for result in result_dict['results']:
     print(result['table'])           # "refund_transactions"
     print(result['schema'])           # Full column info, types, constraints
     print(result['related_tables'])   # ["users", "payments", "transactions"]
 
-# Override hops, limit, search strategy
-results = sc.search("user_table", hops=1, limit=5, search_type="hybrid")
+# Override output format explicitly
+json_results = sc.search("where are user refunds stored?", output_format="json")
+print(json_results)  # JSON formatted string
+
+# Override hops, limit, search strategy, and output format
+results = sc.search("user_table", hops=1, limit=5, search_type="hybrid", output_format="markdown")
 
 ```
 
 `sc.index()` automatically detects schema changes and refreshes cached metadata, so you rarely need to force a reindex manually.
+
+## Database Connection Strings
+
+Schema Search uses SQLAlchemy connection strings:
+
+```python
+# PostgreSQL
+engine = create_engine("postgresql://postgres:mypass@localhost:5432/mydb")
+
+# MySQL
+engine = create_engine("mysql+pymysql://root:mypass@localhost:3306/mydb")
+
+# Snowflake
+engine = create_engine("snowflake://myuser:mypass@xy12345.us-east-1/MYDB/PUBLIC?warehouse=COMPUTE_WH&role=ANALYST")
+
+# BigQuery
+engine = create_engine("bigquery://my-project/my-dataset")
+
+# Databricks
+token = "dapi..."
+host = "dbc-xyz.cloud.databricks.com"
+http_path = "/sql/1.0/warehouses/abc123"
+catalog = "main"
+schema = "default"  # Optional
+
+# Without schema (queries across all schemas in catalog)
+engine = create_engine(
+    f"databricks://token:{token}@{host}?http_path={http_path}&catalog={catalog}",
+    connect_args={"user_agent_entry": "schema-search"}
+)
+
+# With schema (limits to specific schema)
+engine = create_engine(
+    f"databricks://token:{token}@{host}?http_path={http_path}&catalog={catalog}&schema={schema}",
+    connect_args={"user_agent_entry": "schema-search"}
+)
+```
 
 ## Search Strategies
 
@@ -228,6 +276,49 @@ results = sc.search("user refunds", hops=2, limit=10)  # Expand 2 hops, return 1
 # Disable graph expansion
 results = sc.search("user_table", hops=0)  # Only direct matches, no foreign key traversal
 ```
+
+## Output Formats
+
+Schema Search returns a `SearchResult` object that can be rendered in multiple formats:
+
+- **markdown** (default): Formatted markdown with hierarchical table schemas
+- **json**: Structured JSON output
+
+The `SearchResult` object has:
+- `__str__()` method: Renders using the configured format (markdown or json)
+- `.to_dict()` method: Returns raw dictionary for programmatic access
+
+Configure the default format in `config.yml`:
+
+```yaml
+output:
+  format: "markdown"  # or "json"
+  limit: 5            # Default number of results
+```
+
+Override at query time:
+
+```python
+# Default markdown output - just print the object
+results = sc.search("user payments")
+print(results)  # Formatted markdown
+
+# Access underlying data as dictionary
+data = results.to_dict()
+print(data['results'][0]['table'])  # "users"
+
+# Override to JSON format
+json_results = sc.search("user payments", output_format="json")
+print(json_results)  # JSON formatted string
+```
+
+**Markdown output includes:**
+- Table name and relevance score
+- Primary keys and columns with types/constraints
+- Foreign key relationships
+- Indices and constraints
+- Related tables from graph expansion
+- Matched content chunks
 
 ### LLM Chunking
 

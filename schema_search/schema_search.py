@@ -28,8 +28,13 @@ def time_it(func):
         start = time.time()
         result = func(*args, **kwargs)
         elapsed = time.time() - start
+
+        # Handle both dict and SearchResult objects
         if isinstance(result, dict):
             result["latency_sec"] = round(elapsed, 3)
+        elif isinstance(result, SearchResult):
+            result.latency_sec = round(elapsed, 3)
+
         return result
 
     return wrapper
@@ -254,11 +259,18 @@ class SchemaSearch:
         self,
         query: str,
         hops: Optional[int] = None,
-        limit: int = 5,
+        limit: Optional[int] = None,
         search_type: Optional[SearchType] = None,
+        output_format: Optional[str] = None,
     ) -> SearchResult:
         if hops is None:
             hops = int(self.config["search"]["hops"])
+        if limit is None:
+            limit = int(self.config["output"]["limit"])
+
+        # Ensure output_format is never None
+        output_format = output_format or self.config["output"]["format"]
+
         logger.debug(f"Searching: {query} (hops={hops}, search_type={search_type})")
 
         search_type = search_type or self.config["search"]["strategy"]
@@ -277,4 +289,8 @@ class SchemaSearch:
 
         logger.debug(f"Found {len(results)} results")
 
-        return {"results": results, "latency_sec": 0.0}
+        return SearchResult(
+            results=results,
+            latency_sec=0.0,
+            output_format=output_format
+        )

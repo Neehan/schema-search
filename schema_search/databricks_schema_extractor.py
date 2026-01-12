@@ -18,7 +18,7 @@ class DatabricksSchemaExtractor:
     def __init__(self, engine: Engine, config: Dict[str, Any]):
         self.engine = engine
         self.config = config
-        self.catalog = engine.url.database
+        self.catalog = engine.url.query["catalog"]
 
     def extract(self) -> Dict[str, TableSchema]:
         logger.info("Starting extraction...")
@@ -51,7 +51,6 @@ class DatabricksSchemaExtractor:
         return schemas
 
     def _get_tables(self) -> List[tuple]:
-        url_catalog = self.engine.url.database
         query = text(f"""
             SELECT table_name, table_schema, table_type
             FROM system.information_schema.tables
@@ -60,9 +59,9 @@ class DatabricksSchemaExtractor:
         """)
 
         with self.engine.connect() as conn:
-            result = conn.execute(query, {"catalog": url_catalog})
+            result = conn.execute(query, {"catalog": self.catalog})
             rows = [(row[0], row[1]) for row in result]
-            logger.debug(f"Found {len(rows)} tables in catalog {url_catalog}")
+            logger.debug(f"Found {len(rows)} tables in catalog {self.catalog}")
             return rows
 
     def _get_all_columns(self) -> Dict[tuple, List[ColumnInfo]]:

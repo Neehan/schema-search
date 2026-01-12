@@ -16,8 +16,8 @@ mcp = FastMCP("schema-search")
 @mcp.tool()
 def schema_search(
     query: str,
-    limit: int = 5,
-) -> dict:
+    limit: Optional[int] = None,
+) -> str:
     """Search database schema using natural language.
 
     Finds relevant database tables and their relationships by searching through schema metadata
@@ -25,17 +25,16 @@ def schema_search(
 
     Args:
         query: Natural language question about database schema (e.g., 'tables related to payments')
-        limit: Maximum number of table schemas to return in results. Default: 5; Max: 10.
+        limit: Maximum number of table schemas to return in results. Uses config default if not specified.
 
     Returns:
-        Dictionary with 'results' (list of table schemas with columns, types, constraints, and relationships) and 'latency_sec' (query execution time)
+        Formatted search results (markdown or json based on config)
     """
-    limit = min(limit, 10)
+    if limit is None:
+        limit = int(mcp.search_engine.config["output"]["limit"])  # type: ignore
+
     search_result = mcp.search_engine.search(query, limit=limit)  # type: ignore
-    return {
-        "results": search_result["results"],
-        "latency_sec": search_result["latency_sec"],
-    }
+    return str(search_result)
 
 
 def run_server(

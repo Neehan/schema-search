@@ -60,16 +60,16 @@ def _collect_metric(stats: dict, metric_name: str) -> float:
     return value
 
 
-def _plot_grouped_bars(ax, ks, strategies, strategy_stats, colors, title, metric_prefix):
+def _plot_grouped_bars(
+    ax, ks, strategies, strategy_stats, colors, title, metric_prefix
+):
     x = np.arange(len(ks))
     bar_width = 0.6 / len(strategies)
     total_width = bar_width * len(strategies)
 
     for idx, strategy in enumerate(strategies):
         stats = strategy_stats[strategy]
-        values = [
-            _collect_metric(stats, f"{metric_prefix}_{k}") for k in ks
-        ]
+        values = [_collect_metric(stats, f"{metric_prefix}_{k}") for k in ks]
         offsets = x - total_width / 2 + idx * bar_width + bar_width / 2
         ax.bar(
             offsets,
@@ -91,8 +91,14 @@ def _plot_grouped_bars(ax, ks, strategies, strategy_stats, colors, title, metric
 
 
 def _plot_dual_metric(ax, strategies, strategy_stats, colors, metric_names, ylabels):
-    mrr_values = [_collect_metric(strategy_stats[strategy], metric_names[0]) for strategy in strategies]
-    latency_values = [_collect_metric(strategy_stats[strategy], metric_names[1]) for strategy in strategies]
+    mrr_values = [
+        _collect_metric(strategy_stats[strategy], metric_names[0])
+        for strategy in strategies
+    ]
+    latency_values = [
+        _collect_metric(strategy_stats[strategy], metric_names[1])
+        for strategy in strategies
+    ]
 
     x = np.arange(len(metric_names))  # positions for metrics
     bar_width = 0.6 / len(strategies)
@@ -198,7 +204,7 @@ def generate_plot(json_filename: str, output_filename: str) -> None:
     fig.subplots_adjust(top=0.82, left=0.06, right=0.94)
     fig.legend(
         legend_handles,
-        [handle.get_label() for handle in legend_handles],
+        [handle.get_label() for handle in legend_handles],  # type: ignore
         loc="upper center",
         bbox_to_anchor=(0.5, 0.98),
         ncol=len(strategies),

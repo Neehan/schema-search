@@ -1,3 +1,4 @@
+# type: ignore
 """Spider benchmark evaluation.
 
 Warning: this test intentionally creates and drops PostgreSQL databases
@@ -9,7 +10,7 @@ import re
 import time
 import json
 from collections import defaultdict
-from typing import List, Set, Dict, Any
+from typing import List, Set, Dict, Any, TypedDict
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,19 @@ from sqlalchemy import create_engine, text
 from tqdm import tqdm
 from schema_search import SchemaSearch
 from schema_search.types import SearchType
+
+
+class StrategyStats(TypedDict):
+    recall_at_1: List[float]
+    recall_at_3: List[float]
+    recall_at_5: List[float]
+    mrr: List[float]
+    precision_at_1: List[float]
+    precision_at_3: List[float]
+    precision_at_5: List[float]
+    latency: List[float]
+    num_queries: int
+
 
 # WARNING: Do not swap this for an environment variable—this benchmark is meant
 #          to run against an explicit throwaway Postgres instance.
@@ -319,18 +333,18 @@ def test_spider_evaluation(spider_data):
     """
     spider, schema_map = spider_data
 
-    results_by_strategy = defaultdict(
-        lambda: {
-            "recall_at_1": [],
-            "recall_at_3": [],
-            "recall_at_5": [],
-            "mrr": [],
-            "precision_at_1": [],
-            "precision_at_3": [],
-            "precision_at_5": [],
-            "latency": [],
-            "num_queries": 0,
-        }
+    results_by_strategy: Dict[str, StrategyStats] = defaultdict(
+        lambda: StrategyStats(
+            recall_at_1=[],
+            recall_at_3=[],
+            recall_at_5=[],
+            mrr=[],
+            precision_at_1=[],
+            precision_at_3=[],
+            precision_at_5=[],
+            latency=[],
+            num_queries=0,
+        )
     )
 
     strategies: List[SearchType] = ["hybrid", "fuzzy", "bm25", "semantic"]
@@ -401,7 +415,7 @@ def test_spider_evaluation(spider_data):
             )
             latency = time.time() - start_time
 
-            predicted_tables = [r["table"] for r in response["results"]]
+            predicted_tables = [r["table"] for r in response.results]
 
             for k in [1, 3, 5]:
                 results_by_strategy[strategy][f"recall_at_{k}"].append(
@@ -415,7 +429,9 @@ def test_spider_evaluation(spider_data):
                 calculate_mrr(predicted_tables, ground_truth_tables)
             )
             results_by_strategy[strategy]["latency"].append(latency)
-            results_by_strategy[strategy]["num_queries"] += 1
+            # Type-safe increment
+            current_count: int = results_by_strategy[strategy]["num_queries"]  # type: ignore
+            results_by_strategy[strategy]["num_queries"] = current_count + 1
 
         total_queries_evaluated += 1
 

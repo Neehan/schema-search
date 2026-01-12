@@ -63,10 +63,12 @@ def test_search_user_information(search_engine):
     """Test searching for user-related information in the schema."""
     search_engine.index(force=False)
 
-    query = "which table has user email address?"
-    response = search_engine.search(query)
+    query = "which table has user transactions?"
+    response = search_engine.search(query, limit=5)
 
-    results = response["results"]
+    print(response)
+
+    results = response.results
 
     for result in results:
         print(f"Result: {result['table']} (score: {result['score']:.3f})")
@@ -86,7 +88,7 @@ def test_search_user_information(search_engine):
 
     print(f"\nTop result: {top_result['table']} (score: {top_result['score']:.3f})")
     print(f"Related tables: {top_result['related_tables']}")
-    print(f"Search latency: {response['latency_sec']}s")
+    print(f"Search latency: {response.latency_sec}s")
 
 
 def _calculate_score(results, correct_table):
@@ -202,15 +204,15 @@ def _run_memory_test_for_strategy(database_url, llm_config, strategy):
 
         peak_memory = max(peak_memory, after_mem)
         memory_samples.append(after_mem)
-        latency_samples.append(response["latency_sec"])
+        latency_samples.append(response.latency_sec)
 
-        score = _calculate_score(response["results"], correct_table)
+        score = _calculate_score(response.results, correct_table)
         total_score += score
 
         marker = "✓" if score > 0 else "✗"
         print(
             f"  Q{idx}: {marker} Score: {score} | "
-            f"Latency: {response['latency_sec']:.3f}s | "
+            f"Latency: {response.latency_sec:.3f}s | "
             f"Mem: {after_mem:.1f}MB ({after_mem - before_mem:+.1f})"
         )
 
@@ -251,7 +253,7 @@ def test_bm25_no_embeddings(database_url, llm_config):
     result = search.search("user email", search_type="bm25", limit=5)
 
     assert search._embedding_cache is None, "BM25 should not load embedding cache"
-    assert len(result["results"]) > 0, "Should have results"
+    assert len(result.results) > 0, "Should have results"
 
     print("\n✓ BM25 search verified: no embeddings loaded")
 
@@ -273,7 +275,7 @@ def test_fuzzy_no_embeddings(database_url, llm_config):
     result = search.search("user email", search_type="fuzzy", limit=5)
 
     assert search._embedding_cache is None, "Fuzzy should not load embedding cache"
-    assert len(result["results"]) > 0, "Should have results"
+    assert len(result.results) > 0, "Should have results"
 
     print("\n✓ Fuzzy search verified: no embeddings loaded")
 
@@ -295,7 +297,7 @@ def test_semantic_loads_embeddings(database_url, llm_config):
 
     assert search._embedding_cache is not None, "Semantic should create embedding cache"
     assert search.embedding_cache.embeddings is not None, "Embeddings should be loaded"
-    assert len(result["results"]) > 0, "Should have results"
+    assert len(result.results) > 0, "Should have results"
 
     print("\n✓ Semantic search verified: embeddings loaded correctly")
 
@@ -317,7 +319,7 @@ def test_hybrid_loads_embeddings(database_url, llm_config):
 
     assert search._embedding_cache is not None, "Hybrid should create embedding cache"
     assert search.embedding_cache.embeddings is not None, "Embeddings should be loaded"
-    assert len(result["results"]) > 0, "Should have results"
+    assert len(result.results) > 0, "Should have results"
 
     print("\n✓ Hybrid search verified: embeddings loaded correctly")
 
