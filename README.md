@@ -1,7 +1,8 @@
 # Schema Search
 
+***Note: The project has moved to a [new repo and is being maintained by SignalPilot Labs](https://github.com/SignalPilot-Labs/schema-search). The code in the current repo is only available for reference.***
+
 An MCP Server for Natural Language Search over RDBMS Schemas. Find exact tables you need, with all their relationships mapped out, in milliseconds. No vector database setup is required.
-**Note: The project has moved to a [new repo and is being maintained by SignalPilot Labs](https://github.com/SignalPilot-Labs/schema-search)**. The code in the current repo is only available for reference. 
 
 ## Why
 
